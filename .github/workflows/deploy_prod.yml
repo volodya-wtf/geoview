@@ -1,0 +1,20 @@
+name: deploy to prod
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: oort
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create .env
+        run: cp /home/petrov_va/actions-runner/_config/.env ./.env
+      - name: Correct compose file
+        run: cp /home/petrov_va/actions-runner/_config/docker-compose.yml ./docker-compose.yml
+      - name: Create volumes
+        run: make volumes
+      - name: Make up
+        run: make up

@@ -1,0 +1,59 @@
+version: "3.4"
+
+services:
+  backend:
+    container_name: oort_backend
+    env_file: .env
+    user: ${CURRENT_UID}
+    build:
+      context: .
+      target: deploy
+    restart: on-failure
+    volumes:
+      - .:/app/
+      - ./static:/app/static
+    ports:
+        - 5678:5678
+    networks:
+      private_network:
+        ipv4_address: 172.20.0.5
+
+  postgres:
+    container_name: oort_postgres
+    env_file: .env
+    image: postgres:12.3-alpine
+    restart: on-failure
+    volumes:
+      - oort_db_data:/var/lib/postgresql/data
+    networks:
+      private_network:
+        ipv4_address: 172.20.0.6
+
+  nginx:
+    container_name: oort_nginx
+    image: nginx:1.19-alpine
+    restart: on-failure
+    ports:
+      - 8000:8000
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/app/static
+    depends_on:
+      - postgres
+      - backend
+    working_dir: /app/
+    networks:
+      private_network:
+        ipv4_address: 172.20.0.7
+      default:
+
+networks:
+  private_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  oort_db_data:
+    external: True
